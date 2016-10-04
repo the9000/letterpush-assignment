@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from collections import namedtuple
+
 from django.db import models
 
 # Create your models here.
@@ -30,12 +32,14 @@ class Image(DateTrackingModel):
 
 class ImageLink(DateTrackingModel):
     """Stores a link between an image and an article (M:N)."""
-    ROLES = ("lead", "social", "gallery")
     ROLE_CHOICES = (
         ("G", "gallery"),
         ("L", "lead"),
         ("S", "social"),
     )
+    # Role choices as a nicer enum-like object: e.g. ROLES.gallery == "G".
+    ROLES = namedtuple('enum', [name for name, _ in ROLE_CHOICES])(
+        *[value for _, value in ROLE_CHOICES])
     image = models.ForeignKey(Image, on_delete=models.PROTECT)
     article = models.ForeignKey(Article, on_delete=models.PROTECT)
     role = models.CharField(max_length=1, choices=ROLE_CHOICES)
