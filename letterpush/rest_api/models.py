@@ -52,6 +52,8 @@ class ImageLink(DateTrackingModel):
     # Role choices as a nicer enum-like object: e.g. ROLES.gallery == "G".
     ROLES = namedtuple('enum', [name for name, _ in ROLE_CHOICES])(
         *[value for _, value in ROLE_CHOICES])
+    # Prevent attempts to delete images linked to any articles.
     image = models.ForeignKey(Image, on_delete=models.PROTECT)
-    article = models.ForeignKey(Article, on_delete=models.PROTECT)
+    # Allow deletion of artcles, unlinking any related images.
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
     role = models.CharField(max_length=1, choices=ROLE_CHOICES)

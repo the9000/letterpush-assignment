@@ -12,6 +12,13 @@ from restless.preparers import FieldsPreparer
 from .models import Article, Image, ImageLink
 
 
+class RequestError(Exception):
+    """Allow to pass custom status in an exception, as Restless expects."""
+    def __init__(self, message, status=500):
+        super(self.__class__, self).__init__(message)
+        self.status = status
+
+
 class ArticleResource(DjangoResource):
     preparer = FieldsPreparer(fields={  # Bare minimum of properties.
         'id': 'id',
@@ -48,10 +55,17 @@ class ArticleResource(DjangoResource):
     def create(self, *args, **kwargs):
         extra_fields = set(self.data) - self.UPDATABLE_FIELDS
         if extra_fields:
-            raise ValueError("Cannot accept fields", extra_fields)
+            raise RequestError(
+                "Cannot accept field(s) %s" % ", ".join(extra_fields),
+                status=400)
         article = Article(**self.data)
         article.save()
         return article
+
+    def delete(self, *args, **kwargs):
+        delete_count, _ = Article.objects.filter(id=kwargs['pk']).delete()
+        if delete_count != 1:
+            raise RequestError("Got %d objects" % delete_count, status=404)
 
     def is_authenticated(self):
         return True  # NOTE: for demo / debug purposes.
