@@ -7,14 +7,14 @@ e.g. to demonstrate proper error handling.
 
 ## How to use
 
-    pip install < requirements.txt
+    pip install -r requirements.txt
     cd letterpush
-    ./manage.py migrate
-    ./manage.py test rest_api.resources_tests
+    python ./manage.py migrate
+    python ./manage.py test rest_api.resources_tests
 
 Then play around using e.g. HTTPie. No auth required.
 
-    ./manage.py runserver
+    python ./manage.py runserver
     echo '{"path": "lolcat.jpg", "note": "They love cats"}' | http POST localhost:8000/api/images/
     echo '{"title: "Cats!", "body": "Just look."}' | http POST localhost:8000/api/articles/
     # Note the article and image IDs above.
