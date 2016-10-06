@@ -52,17 +52,34 @@ class ModelBasedResource(DjangoResource):
     def detail(self, pk):
         return self.MODEL.objects.get(id=pk)
 
-    @with_integrity_error_400
-    def create(self, *args, **kwargs):
+    def ensure_no_extra_fields(self):
+        """Raise a bad request"""
         extra_fields = set(self.data) - self.UPDATABLE_FIELDS
         if extra_fields:
             raise RequestError(
                 "Cannot accept field(s) %s" % ", ".join(extra_fields),
                 status=400)
+
+    @with_integrity_error_400
+    def create(self, *args, **kwargs):
+        self.ensure_no_extra_fields()
         thing = self.MODEL(**self.data)
         thing.full_clean()  # Run model's validators.
         thing.save()
         return thing
+
+    @with_integrity_error_400
+    def update(self, *args, **kwargs):
+        self.ensure_no_extra_fields()
+        try:
+            thing = self.MODEL.objects.filter(id=kwargs["pk"]).get()
+            for attr_name, value in self.data.items():
+                setattr(thing, attr_name, value)
+            thing.full_clean()  # Run model's validators.
+            thing.save()
+            return thing
+        except self.MODEL.DoesNotExist as e:
+            raise RequestError(str(e), status=404)  # Not Found
 
     @with_integrity_error_400
     def delete(self, *args, **kwargs):
