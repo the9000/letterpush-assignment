@@ -99,7 +99,7 @@ class ImageLinkResource(ModelBasedResource):
         'id': 'id',
         'article_id': 'article_id',
         'image_id': 'image_id',
-        'role': 'roleName',
+        'role': 'role',
         'created': 'created',
         'updated': 'updated',
     })

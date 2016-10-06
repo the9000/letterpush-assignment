@@ -27,9 +27,8 @@ class Article(DateTrackingModel):
         Ignores link info except the role name.
         """
         links = {role: [] for role in ImageLink.ROLES}
-        role_label = dict(ImageLink.ROLE_CHOICES)  # Map .role value to label.
         for image_link in self.imagelink_set.all().prefetch_related("image"):
-            links[role_label[image_link.role]].append(image_link.image)
+            links[image_link.role].append(image_link.image)
         return links
 
 
@@ -61,11 +60,3 @@ class ImageLink(DateTrackingModel):
     # Allow deletion of artcles, unlinking any related images.
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     role = models.CharField(max_length=1, choices=ROLE_CHOICES)
-
-    @property
-    def roleName(self):
-        # A linear lookup in a 3-item list is about as fast as dict access.
-        for mark, name in self.ROLE_CHOICES:
-            if self.role == mark:
-                return name
-        raise ValueError('Unknown role %r' % self.role)
