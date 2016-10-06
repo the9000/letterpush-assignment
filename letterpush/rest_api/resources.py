@@ -7,6 +7,7 @@ Anything under "related_resources" is not updatable.
 """
 
 from django.db import IntegrityError
+from django.db import transaction
 
 from restless.dj import DjangoResource
 from restless.preparers import FieldsPreparer
@@ -61,6 +62,7 @@ class ModelBasedResource(DjangoResource):
                 status=400)
 
     @with_integrity_error_400
+    @transaction.atomic
     def create(self, *args, **kwargs):
         self.ensure_no_extra_fields()
         thing = self.MODEL(**self.data)
@@ -69,6 +71,7 @@ class ModelBasedResource(DjangoResource):
         return thing
 
     @with_integrity_error_400
+    @transaction.atomic
     def update(self, *args, **kwargs):
         self.ensure_no_extra_fields()
         try:
@@ -82,6 +85,7 @@ class ModelBasedResource(DjangoResource):
             raise RequestError(str(e), status=404)  # Not Found
 
     @with_integrity_error_400
+    @transaction.atomic
     def delete(self, *args, **kwargs):
         delete_count, _ = self.MODEL.objects.filter(id=kwargs['pk']).delete()
         if delete_count != 1:
