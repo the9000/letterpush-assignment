@@ -6,6 +6,8 @@ directly by a POST request to the same URL. This is to save a round-trip.
 Anything under "related_resources" is not updatable.
 """
 
+from django.db import IntegrityError
+
 from restless.dj import DjangoResource
 from restless.preparers import FieldsPreparer
 
@@ -17,6 +19,16 @@ class RequestError(Exception):
     def __init__(self, message, status=500):
         super(self.__class__, self).__init__(message)
         self.status = status
+
+
+def with_integrity_error_400(func):
+    """A decorator that raises RequestError(status=400) on IntegrityError."""
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except IntegrityError as e:
+            raise RequestError(str(e), status=400)
+    return wrapped
 
 
 class ModelBasedResource(DjangoResource):
@@ -35,6 +47,7 @@ class ModelBasedResource(DjangoResource):
     def detail(self, pk):
         return self.MODEL.objects.get(id=pk)
 
+    @with_integrity_error_400
     def create(self, *args, **kwargs):
         extra_fields = set(self.data) - self.UPDATABLE_FIELDS
         if extra_fields:
@@ -45,6 +58,7 @@ class ModelBasedResource(DjangoResource):
         thing.save()
         return thing
 
+    @with_integrity_error_400
     def delete(self, *args, **kwargs):
         delete_count, _ = self.MODEL.objects.filter(id=kwargs['pk']).delete()
         if delete_count != 1:
