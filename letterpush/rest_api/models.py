@@ -44,6 +44,10 @@ class Image(DateTrackingModel):
 
 class ImageLink(DateTrackingModel):
     """Stores a link between an image and an article (M:N)."""
+    class Meta:
+        unique_together = (
+            ('article', 'role', 'image'),  # Also a useful index by article.
+        )
     ROLE_CHOICES = (
         ("G", "gallery"),
         ("L", "lead"),
@@ -57,3 +61,11 @@ class ImageLink(DateTrackingModel):
     # Allow deletion of artcles, unlinking any related images.
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     role = models.CharField(max_length=1, choices=ROLE_CHOICES)
+
+    @property
+    def roleName(self):
+        # A linear lookup in a 3-item list is about as fast as dict access.
+        for mark, name in self.ROLE_CHOICES:
+            if self.role == mark:
+                return name
+        raise ValueError('Unknown role %r' % self.role)
