@@ -90,6 +90,18 @@ class ModelBasedResource(DjangoResource):
     def is_authenticated(self):
         return True  # NOTE: for demo / debug purposes.
 
+    def get_related_data(self, instance):
+        """Return a dict of related_data to the object representation."""
+        return None  # None means adding nothing.
+
+    def prepare(self, instance):
+        """Turns a model into a serializable representation."""
+        prepared = super(ModelBasedResource, self).prepare(instance)
+        additional = self.get_related_data(instance)
+        if additional:
+            prepared.setdefault("related_resources", {}).update(additional)
+        return prepared
+
 
 class ArticleResource(ModelBasedResource):
     MODEL = Article
@@ -102,19 +114,9 @@ class ArticleResource(ModelBasedResource):
         'updated': 'updated',
     })
 
-    def prepare(self, instance):
-        """Turns a model into a serializable representation."""
-        prepared = super(self.__class__, self).prepare(instance)
-        return self.add_related(instance, prepared)
-
-    def add_related(self, instance, prepared_data):
-        # Embed image resources as nested.
-        # Restless does not have a notion of embedded resources.
-        img_res = ImageResource()
-        prepared_images = {role: map(img_res.prepare, images)
-                           for role, images in instance.imagesByRole().items()}
-        prepared_data.setdefault("related_resources", {})["images"] = prepared_images
-        return prepared_data
+    def get_related_data(self, instance):
+        return {"image_links": ImageLinkResource.get_from_collection(
+            instance.imagelink_set.all())}
 
 
 class ImageResource(ModelBasedResource):
@@ -128,6 +130,10 @@ class ImageResource(ModelBasedResource):
         'updated': 'updated',
     })
 
+    def get_related_data(self, instance):
+        return {"image_links": ImageLinkResource.get_from_collection(
+            instance.imagelink_set.all())}
+
 
 class ImageLinkResource(ModelBasedResource):
     MODEL = ImageLink
@@ -140,3 +146,9 @@ class ImageLinkResource(ModelBasedResource):
         'created': 'created',
         'updated': 'updated',
     })
+
+    @classmethod
+    def get_from_collection(cls, collection):
+        """Returns a list of representations from collection of instances."""
+        resource = cls()
+        return [resource.prepare(link) for link in collection]
