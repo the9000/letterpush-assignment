@@ -30,5 +30,5 @@ Etc.
 Took quite a bit longer, not because of the time required,
 but mostly to carve produictive time from home life.
 
-It took around 6 hours rahter than 4, but from the commit history
+It took around 6 hours rather than 4, but from the commit history
 the actual velocity can be seen.
