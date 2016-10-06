@@ -22,7 +22,12 @@ class RequestError(Exception):
 
 
 def with_integrity_error_400(func):
-    """A decorator that raises RequestError(status=400) on IntegrityError."""
+    """
+    A decorator that raises RequestError(status=400) on IntegrityError.
+    On an create / update operation, it's likely bad data, not a server's fault.
+    """
+    # NOTE: the validation error message ends up being a JSON string.
+    # This is not nice, but fixing it is out of scope for now.
     def wrapped(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -55,6 +60,7 @@ class ModelBasedResource(DjangoResource):
                 "Cannot accept field(s) %s" % ", ".join(extra_fields),
                 status=400)
         thing = self.MODEL(**self.data)
+        thing.full_clean()  # Run model's validators.
         thing.save()
         return thing
 

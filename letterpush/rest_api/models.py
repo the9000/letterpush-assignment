@@ -26,7 +26,7 @@ class Article(DateTrackingModel):
         Eagerly load and group images as a dict keyed by role.
         Ignores link info except the role name.
         """
-        links = {role: [] for role in ImageLink.ROLES}
+        links = {role: [] for role, _ in ImageLink.ROLE_CHOICES}
         for image_link in self.imagelink_set.all().prefetch_related("image"):
             links[image_link.role].append(image_link.image)
         return links
@@ -53,6 +53,7 @@ class ImageLink(DateTrackingModel):
         ("S", "social"),
     )
     # Role choices as a nicer enum-like object: e.g. ROLES.gallery == "G".
+    # Not used anywhere currently, though.
     ROLES = namedtuple('enum', [name for name, _ in ROLE_CHOICES])(
         *[value for _, value in ROLE_CHOICES])
     # Prevent attempts to delete images linked to any articles.
