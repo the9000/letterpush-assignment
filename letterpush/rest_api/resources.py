@@ -87,9 +87,6 @@ class ModelBasedResource(DjangoResource):
         if delete_count != 1:
             raise RequestError("Got %d objects" % delete_count, status=404)
 
-    def is_authenticated(self):
-        return True  # NOTE: for demo / debug purposes.
-
     def get_related_data(self, instance):
         """Return a dict of related_data to the object representation."""
         return None  # None means adding nothing.
@@ -101,6 +98,12 @@ class ModelBasedResource(DjangoResource):
         if additional:
             prepared.setdefault("related_resources", {}).update(additional)
         return prepared
+
+    def is_authenticated(self):
+        # NOTE: for demo / debug purposes.
+        # self.request is available here so any auth middleware that updates it
+        # can be used, and the auth status checked here.
+        return True
 
 
 class ArticleResource(ModelBasedResource):
